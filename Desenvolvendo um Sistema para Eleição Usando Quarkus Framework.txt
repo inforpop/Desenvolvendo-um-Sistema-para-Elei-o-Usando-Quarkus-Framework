@@ -1,0 +1,132 @@
+Desenvolvendo um Sistema para Eleição Usando Quarkus Framework
+Desenvolver um sistema de eleição usando o Quarkus Framework envolve várias etapas, desde a criação da estrutura do projeto até a implementação de funcionalidades como o registro de eleitores, a criação de candidatos, e a contabilização dos votos. Aqui está um guia geral para te ajudar a começar:
+
+### 1. **Configuração do Ambiente**
+   - **Instale o Quarkus CLI**: Siga o [guia oficial](https://quarkus.io/get-started/) para configurar o Quarkus CLI.
+   - **Crie um Novo Projeto**:
+     ```bash
+     quarkus create app com.example.election-system --no-code
+     cd election-system
+     ```
+
+### 2. **Definição das Entidades**
+   - As principais entidades do sistema serão `Voter`, `Candidate`, `Election`, e `Vote`.
+   - **Exemplo de Entidade Voter**:
+     ```java
+     @Entity
+     public class Voter {
+         @Id
+         @GeneratedValue(strategy = GenerationType.IDENTITY)
+         private Long id;
+         private String name;
+         private String cpf;
+         
+         // Getters e Setters
+     }
+     ```
+
+   - **Entidade Candidate**:
+     ```java
+     @Entity
+     public class Candidate {
+         @Id
+         @GeneratedValue(strategy = GenerationType.IDENTITY)
+         private Long id;
+         private String name;
+         private String party;
+         
+         // Getters e Setters
+     }
+     ```
+
+### 3. **Criação do Banco de Dados**
+   - **Adicione a dependência do Hibernate ORM com Panache**:
+     ```bash
+     quarkus extension add hibernate-orm-panache
+     ```
+   - **Configure o Banco de Dados em `application.properties`**:
+     ```properties
+     quarkus.datasource.db-kind=h2
+     quarkus.datasource.jdbc.url=jdbc:h2:mem:test
+     quarkus.datasource.username=sa
+     quarkus.datasource.password=sa
+     quarkus.hibernate-orm.database.generation=drop-and-create
+     ```
+
+### 4. **Implementação dos Repositórios**
+   - Use o Panache para simplificar a criação de repositórios:
+   - **Exemplo de Repositório para Voter**:
+     ```java
+     @ApplicationScoped
+     public class VoterRepository implements PanacheRepository<Voter> {
+     }
+     ```
+
+### 5. **Criação dos Endpoints REST**
+   - **Adicione a dependência RESTEasy Reactive**:
+     ```bash
+     quarkus extension add resteasy-reactive
+     ```
+   - **Exemplo de Endpoint para Registro de Voter**:
+     ```java
+     @Path("/voters")
+     @Produces(MediaType.APPLICATION_JSON)
+     @Consumes(MediaType.APPLICATION_JSON)
+     public class VoterResource {
+
+         @Inject
+         VoterRepository voterRepository;
+
+         @POST
+         public Response createVoter(Voter voter) {
+             voterRepository.persist(voter);
+             return Response.status(Response.Status.CREATED).entity(voter).build();
+         }
+
+         @GET
+         public List<Voter> getAllVoters() {
+             return voterRepository.listAll();
+         }
+     }
+     ```
+
+### 6. **Funcionalidades de Votação**
+   - **Registro de Votos**:
+     - Criar uma entidade `Vote` que relaciona `Voter`, `Candidate`, e `Election`.
+   - **Contabilização de Votos**:
+     - Implementar um serviço que conte os votos para cada candidato.
+
+### 7. **Interface de Usuário**
+   - **Frontend**: Pode ser desenvolvido usando frameworks como Angular, React ou mesmo HTML e JS puro.
+   - **Comunicação**: Utilizar APIs REST para a interação com o backend Quarkus.
+
+### 8. **Testes**
+   - **Teste das APIs REST**: Use a biblioteca `RestAssured` para testar os endpoints.
+   - **Exemplo de Teste**:
+     ```java
+     @QuarkusTest
+     public class VoterResourceTest {
+
+         @Test
+         public void testVoterEndpoint() {
+             given()
+               .when().get("/voters")
+               .then()
+                  .statusCode(200);
+         }
+     }
+     ```
+
+### 9. **Execução e Deploy**
+   - **Executar Localmente**:
+     ```bash
+     ./mvnw compile quarkus:dev
+     ```
+   - **Deploy**: Quarkus oferece suporte para vários ambientes de deploy, incluindo Kubernetes, OpenShift, e muito mais.
+
+### 10. **Considerações Finais**
+   - **Segurança**: Considere adicionar autenticação e autorização, por exemplo, utilizando o Quarkus Security.
+   - **Validação de Dados**: Implementar validações nos formulários e nas entradas de API.
+   - **Monitoramento**: Utilize extensões como `quarkus-smallrye-health` para monitorar a saúde da aplicação.
+
+Esse é um guia geral para começar com um sistema de eleição usando Quarkus. Dependendo das necessidades do projeto, outras funcionalidades e ajustes podem ser necessários.
